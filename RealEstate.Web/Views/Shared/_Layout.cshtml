@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RealEstate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+        }
+        body { font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: linear-gradient(135deg, #1e40af, #2563eb) !important; }
+        .navbar-brand { font-size: 1.5rem; font-weight: 700; }
+        .hero { background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+                min-height: 500px; display: flex; align-items: center; }
+        .property-card { transition: transform 0.3s, box-shadow 0.3s; border: none; border-radius: 12px; overflow: hidden; }
+        .property-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important; }
+        .property-img { height: 200px; background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+                        display: flex; align-items: center; justify-content: center; }
+        .badge-type { position: absolute; top: 10px; left: 10px; }
+        .badge-featured { position: absolute; top: 10px; right: 10px; }
+        .price-tag { color: var(--primary); font-weight: 700; font-size: 1.2rem; }
+        .footer { background: #1e293b; color: #94a3b8; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--secondary); border-color: var(--secondary); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand text-white" href="/">
+                <i class="fas fa-home me-2"></i>RealEstate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/Home/Properties">Properties</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    @if (Context.Session.GetString("Token") != null)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/Home/Profile">
+                                <i class="fas fa-user me-1"></i>@Context.Session.GetString("FullName")
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/Home/Favorites">
+                                <i class="fas fa-heart me-1"></i>Favorites
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/Home/MyInquiries">
+                                <i class="fas fa-envelope me-1"></i>Inquiries
+                            </a>
+                        </li>
+                        @if (Context.Session.GetString("Role") == "Agent")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="/Home/AgentDashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                            </li>
+                        }
+                        @if (Context.Session.GetString("Role") == "Admin")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" href="/Home/AdminDashboard">
+                                    <i class="fas fa-crown me-1"></i>Admin
+                                </a>
+                            </li>
+                        }
+                       
+                        <li class="nav-item">
+                            <a class="nav-link text-warning" href="/Auth/Logout">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/Auth/Login">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/Auth/Register">
+                                <i class="fas fa-user-plus me-1"></i>Register
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="footer py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">© 2026 RealEstate. Built with ASP.NET Core.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const userId = "@Context.Session.GetString("UserId")";
+        const userToken = "@Context.Session.GetString("Token")";
+
+        if (userId && userId !== "") {
+            var connection = new signalR.HubConnectionBuilder()
+                .withUrl(`https://localhost:7056/hubs/notifications?userId=${userId}`)
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveNotification", (notification) => {
+                showNotification(notification.title, notification.message, notification.type);
+            });
+
+            connection.start().catch(err => console.error("SignalR error:", err));
+
+            function showNotification(title, message, type) {
+                // Update bell badge
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    const count = parseInt(badge.innerText || '0') + 1;
+                    badge.innerText = count;
+                    badge.style.display = 'inline';
+                }
+
+                // Create toast notification
+                const toastHtml = `
+                    <div id="liveToast" class="toast align-items-center border-0 show"
+                        style="position:fixed;top:80px;right:20px;z-index:9999;min-width:300px;
+                        background:${type === 'inquiry' ? '#1e40af' : type === 'booking' ? '#15803d' : '#7c3aed'};
+                        color:white;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                        <div class="d-flex">
+                            <div class="toast-body p-3">
+                                <strong>🔔 ${title}</strong><br>
+                                <small>${message}</small>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                onclick="this.closest('.toast').remove()"></button>
+                        </div>
+                    </div>`;
+
+                // Remove existing toast
+                const existing = document.getElementById('liveToast');
+                if (existing) existing.remove();
+
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    const toast = document.getElementById('liveToast');
+                    if (toast) toast.remove();
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

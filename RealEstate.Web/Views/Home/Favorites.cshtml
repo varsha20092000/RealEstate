@@ -1,0 +1,81 @@
+﻿@{
+    ViewData["Title"] = "My Favorites";
+    var token = ViewBag.Token as string ?? "";
+}
+
+<div class="bg-primary text-white py-4">
+    <div class="container">
+        <h3 class="fw-bold mb-0">
+            <i class="fas fa-heart me-2"></i>My Favorites
+        </h3>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4" id="favoritesList">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted">Loading favorites...</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const token = "@token";
+        const favorites = @Html.Raw(ViewBag.FavoritesJson ?? "[]");
+
+        if (favorites.length > 0) {
+            document.getElementById('favoritesList').innerHTML = favorites.map(f => `
+                <div class="col-md-4">
+                    <div class="card property-card shadow-sm h-100">
+                        <div class="position-relative">
+                            <div class="property-img bg-light d-flex align-items-center justify-content-center">
+                                <i class="fas fa-home fa-3x text-secondary"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small">
+                                <i class="fas fa-calendar me-1"></i>
+                                Saved on ${new Date(f.savedAt).toLocaleDateString()}
+                            </p>
+                            <p class="text-muted small">
+                                Property ID: ${f.propertyId}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white border-0 d-flex gap-2">
+                            <a href="/Home/PropertyDetail/${f.propertyId}"
+                                class="btn btn-primary flex-grow-1">
+                                View Property
+                            </a>
+                            <button class="btn btn-outline-danger"
+                                onclick="removeFavorite('${f.id}')">
+                                <i class="fas fa-heart-broken"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('favoritesList').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No favorites yet!</h5>
+                    <a href="/Home/Properties" class="btn btn-primary mt-2">
+                        Browse Properties
+                    </a>
+                </div>`;
+        }
+
+        async function removeFavorite(id) {
+            if (!confirm('Remove from favorites?')) return;
+
+            const response = await fetch(`https://localhost:7056/api/Favorites/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) location.reload();
+        }
+    </script>
+}

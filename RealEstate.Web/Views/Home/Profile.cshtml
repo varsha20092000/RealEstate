@@ -1,0 +1,134 @@
+﻿@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="bg-primary text-white py-4">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-white rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:60px;height:60px;">
+                <i class="fas fa-user fa-2x text-primary"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold mb-0">@ViewBag.FullName</h3>
+                <span class="badge bg-warning text-dark">@ViewBag.Role</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+
+        <!-- Stats Cards -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                <h3 class="fw-bold" id="inquiryCount">0</h3>
+                <p class="text-muted mb-0">My Inquiries</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <i class="fas fa-calendar fa-2x text-success mb-2"></i>
+                <h3 class="fw-bold" id="bookingCount">0</h3>
+                <p class="text-muted mb-0">Visit Bookings</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <i class="fas fa-heart fa-2x text-danger mb-2"></i>
+                <h3 class="fw-bold">0</h3>
+                <p class="text-muted mb-0">Favorites</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                <h3 class="fw-bold">0</h3>
+                <p class="text-muted mb-0">Reviews</p>
+            </div>
+        </div>
+
+        <!-- My Inquiries -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fas fa-envelope me-2 text-primary"></i>My Inquiries
+                </div>
+                <div class="card-body" id="inquiriesList">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Visit Bookings -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fas fa-calendar me-2 text-success"></i>My Visit Bookings
+                </div>
+                <div class="card-body" id="bookingsList">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const inquiries = @Html.Raw(ViewBag.InquiriesJson ?? "[]");
+        const bookings = @Html.Raw(ViewBag.BookingsJson ?? "[]");
+
+        // Inquiries
+        document.getElementById('inquiryCount').textContent = inquiries.length;
+        if (inquiries.length > 0) {
+            document.getElementById('inquiriesList').innerHTML = inquiries.map(i => `
+                <div class="border-bottom pb-2 mb-2">
+                    <p class="mb-1 fw-bold small">${i.message}</p>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge ${i.isReplied ? 'bg-success' : 'bg-warning text-dark'}">
+                            ${i.isReplied ? '✅ Replied' : '⏳ Pending'}
+                        </span>
+                        <small class="text-muted">
+                            ${new Date(i.createdAt).toLocaleDateString()}
+                        </small>
+                    </div>
+                    ${i.reply ? `<p class="text-success small mt-1">Reply: ${i.reply}</p>` : ''}
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('inquiriesList').innerHTML =
+                '<p class="text-muted text-center">No inquiries yet!</p>';
+        }
+
+        // Bookings
+        document.getElementById('bookingCount').textContent = bookings.length;
+        if (bookings.length > 0) {
+            document.getElementById('bookingsList').innerHTML = bookings.map(b => `
+                <div class="border-bottom pb-2 mb-2">
+                    <p class="mb-1 fw-bold small">
+                        Visit on ${new Date(b.visitDate).toLocaleDateString()}
+                    </p>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge ${
+                            b.status === 'Confirmed' ? 'bg-success' :
+                            b.status === 'Cancelled' ? 'bg-danger' : 'bg-warning text-dark'}">
+                            ${b.status}
+                        </span>
+                        <small class="text-muted">${b.notes ?? ''}</small>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('bookingsList').innerHTML =
+                '<p class="text-muted text-center">No bookings yet!</p>';
+        }
+    </script>
+}
