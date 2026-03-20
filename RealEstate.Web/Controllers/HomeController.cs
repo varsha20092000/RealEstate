@@ -104,6 +104,7 @@ public class HomeController : Controller
 
         ViewBag.IsLoggedIn = HttpContext.Session.GetString("Token") != null;
         ViewBag.Token = HttpContext.Session.GetString("Token");
+        ViewBag.UserRole = HttpContext.Session.GetString("Role");
         return View();
     }
     public async Task<IActionResult> Profile()

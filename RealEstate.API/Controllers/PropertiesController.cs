@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Migrations;
 using RealEstate.Application.DTOs;
 using RealEstate.Application.Interfaces;
+using RealEstate.Domain.Entities;
 using RealEstate.Domain.Interfaces;
 
 namespace RealEstate.API.Controllers;
@@ -13,13 +15,15 @@ public class PropertiesController : ControllerBase
     private readonly IUnitOfWork _uow;
     private readonly IPropertyService _propertyService;
     private readonly ISearchService _searchService;
+    private readonly IWebHostEnvironment _environment;
 
     public PropertiesController(IUnitOfWork uow, IPropertyService propertyService,
-        ISearchService searchService)
+        ISearchService searchService, IWebHostEnvironment environment)
     {
         _uow = uow;
         _propertyService = propertyService;
         _searchService = searchService;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -44,7 +48,7 @@ public class PropertiesController : ControllerBase
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
         var result = await _propertyService.CreateAsync(dto, userId);
         await _searchService.IndexPropertyAsync(await _uow.Properties.GetByIdAsync(result.Id)
-            ?? new RealEstate.Domain.Entities.Property());
+            ?? new Property());
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
@@ -66,7 +70,6 @@ public class PropertiesController : ControllerBase
         return NoContent();
     }
 
-    // GET api/properties/search — SQL filter search
     [HttpGet("search")]
     public async Task<IActionResult> Search(
         [FromQuery] string? city,
@@ -109,7 +112,6 @@ public class PropertiesController : ControllerBase
         });
     }
 
-    // GET api/properties/fulltext?q=luxury mumbai — Elasticsearch full-text search
     [HttpGet("fulltext")]
     public async Task<IActionResult> FullTextSearch([FromQuery] string q)
     {
@@ -117,10 +119,18 @@ public class PropertiesController : ControllerBase
             return BadRequest("Search query is required");
 
         var results = await _searchService.SearchPropertiesAsync(q);
-        return Ok(results);
+
+        // Enrich with images and full data from DB
+        var enriched = new List<PropertyDto>();
+        foreach (var r in results)
+        {
+            var full = await _propertyService.GetByIdAsync(r.Id);
+            if (full != null) enriched.Add(full);
+        }
+
+        return Ok(enriched);
     }
 
-    // POST api/properties/reindex — reindex all properties
     [Authorize(Roles = "Admin")]
     [HttpPost("reindex")]
     public async Task<IActionResult> ReIndex()
@@ -130,7 +140,6 @@ public class PropertiesController : ControllerBase
         return Ok(new { message = $"Indexed {properties.Count()} properties" });
     }
 
-    // POST api/properties/{id}/images
     [Authorize]
     [HttpPost("{id}/images")]
     public async Task<IActionResult> UploadImage(Guid id, IFormFile file)
@@ -154,7 +163,7 @@ public class PropertiesController : ControllerBase
 
         var imageUrl = $"https://localhost:7056/images/{fileName}";
 
-        var image = new RealEstate.Domain.Entities.PropertyImage
+        var image = new PropertyImage
         {
             PropertyId = id,
             ImageUrl = imageUrl
@@ -163,6 +172,25 @@ public class PropertiesController : ControllerBase
         await _uow.PropertyImages.AddAsync(image);
         await _uow.SaveChangesAsync();
 
-        return Ok(new { imageUrl });
+        return Ok(new { imageUrl, imageId = image.Id });
+    }
+
+    [Authorize(Roles = "Agent,Admin")]
+    [HttpDelete("{id}/images/{imageId}")]
+    public async Task<IActionResult> DeleteImage(Guid id, Guid imageId)
+    {
+        var image = await _uow.PropertyImages.GetByIdAsync(imageId);
+        if (image == null || image.PropertyId != id)
+            return NotFound();
+
+        var filePath = Path.Combine(
+            _environment.WebRootPath, "images",
+            Path.GetFileName(image.ImageUrl));
+        if (System.IO.File.Exists(filePath))
+            System.IO.File.Delete(filePath);
+
+        await _uow.PropertyImages.DeleteAsync(imageId);
+        await _uow.SaveChangesAsync();
+        return Ok();
     }
 }

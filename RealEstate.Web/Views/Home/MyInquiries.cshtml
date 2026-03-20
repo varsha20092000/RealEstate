@@ -22,6 +22,10 @@
 
 @section Scripts {
     <script>
+        // Clear inquiry badge when user visits inquiries
+            localStorage.setItem('inqUnread', '0');
+            const inqBadge = document.getElementById('inquiryBadge');
+            if (inqBadge) inqBadge.style.display = 'none';
         const token = "@token";
         const inquiries = @Html.Raw(ViewBag.InquiriesJson ?? "[]");
 

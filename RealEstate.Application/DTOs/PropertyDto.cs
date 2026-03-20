@@ -1,4 +1,16 @@
-﻿namespace RealEstate.Application.DTOs;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Migrations;
+using System.Diagnostics.Metrics;
+using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+
+namespace RealEstate.Application.DTOs;
+
+public class PropertyImageDto
+{
+    public Guid Id { get; set; }
+    public string ImageUrl { get; set; } = string.Empty;
+}
 
 public class PropertyDto
 {
@@ -19,6 +31,7 @@ public class PropertyDto
     public DateTime CreatedAt { get; set; }
     public string? AgentName { get; set; }
     public List<string> ImageUrls { get; set; } = new();
+    public List<PropertyImageDto> Images { get; set; } = new();
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public Guid? AgentId { get; set; }
@@ -39,7 +52,6 @@ public class CreatePropertyDto
     public bool IsFeatured { get; set; }
     public double Latitude { get; set; }
     public double Longitude { get; set; }
-
 }
 
 public class UpdatePropertyDto : CreatePropertyDto

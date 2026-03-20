@@ -62,6 +62,7 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/Home/MyInquiries">
                                 <i class="fas fa-envelope me-1"></i>Inquiries
+                                <span id="inquiryBadge" class="badge bg-danger rounded-pill ms-1" style="display:none;font-size:10px;">0</span>
                             </a>
                         </li>
                         @if (Context.Session.GetString("Role") == "Agent")
@@ -111,7 +112,7 @@
 
     <footer class="footer py-4 mt-5">
         <div class="container text-center">
-            <p class="mb-0">© 2026 RealEstate. Built with ASP.NET Core.</p>
+            <p class="mb-0">copyright © 2026 RealEstate Application</p>
         </div>
     </footer>
 
@@ -131,18 +132,31 @@
             connection.on("ReceiveNotification", (notification) => {
                 showNotification(notification.title, notification.message, notification.type);
             });
+        connection.start().catch(err => console.error("SignalR error:", err));
 
-            connection.start().catch(err => console.error("SignalR error:", err));
+                   // Show badge from localStorage (persists across pages)
+            function loadBadges() {
+                const inqCount  = parseInt(localStorage.getItem('inqUnread')  || '0');
+                const dashCount = parseInt(localStorage.getItem('dashUnread') || '0');
+                const inqBadge  = document.getElementById('inquiryBadge');
+                const dashBadge = document.getElementById('dashboardBadge');
+                if (inqBadge && inqCount > 0)   { inqBadge.innerText  = inqCount;  inqBadge.style.display  = 'inline'; }
+                if (dashBadge && dashCount > 0)  { dashBadge.innerText = dashCount; dashBadge.style.display = 'inline'; }
+            }
+            loadBadges();
 
-            function showNotification(title, message, type) {
-                // Update bell badge
-                const badge = document.getElementById('notificationBadge');
-                if (badge) {
-                    const count = parseInt(badge.innerText || '0') + 1;
-                    badge.innerText = count;
-                    badge.style.display = 'inline';
-                }
+          function showNotification(title, message, type) {
+                const dashBadge = document.getElementById('dashboardBadge');
+                const inqBadge  = document.getElementById('inquiryBadge');
 
+                // Increment and save to localStorage
+                const dashCount = parseInt(localStorage.getItem('dashUnread') || '0') + 1;
+                const inqCount  = parseInt(localStorage.getItem('inqUnread')  || '0') + 1;
+                localStorage.setItem('dashUnread', dashCount);
+                localStorage.setItem('inqUnread',  inqCount);
+
+                if (dashBadge) { dashBadge.innerText = dashCount; dashBadge.style.display = 'inline'; }
+                if (inqBadge)  { inqBadge.innerText  = inqCount;  inqBadge.style.display  = 'inline'; }
                 // Create toast notification
                 const toastHtml = `
                     <div id="liveToast" class="toast align-items-center border-0 show"

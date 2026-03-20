@@ -2,6 +2,66 @@
     ViewData["Title"] = "My Profile";
 }
 
+<style>
+    .stat-card {
+        cursor: pointer;
+        transition: all 0.25s ease;
+        border-bottom: 3px solid transparent !important;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+        }
+
+        .stat-card.active-inq {
+            border-bottom-color: #2563eb !important;
+            background: #eff6ff !important;
+        }
+
+        .stat-card.active-book {
+            border-bottom-color: #10b981 !important;
+            background: #f0fdf4 !important;
+        }
+
+        .stat-card.active-fav {
+            border-bottom-color: #ef4444 !important;
+            background: #fff1f2 !important;
+        }
+
+        .stat-card.active-rev {
+            border-bottom-color: #f59e0b !important;
+            background: #fffbeb !important;
+        }
+
+    .section-panel {
+        display: none;
+        animation: slideDown 0.3s ease;
+    }
+
+        .section-panel.show {
+            display: block;
+        }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .click-hint {
+        font-size: 10px;
+        margin-top: 4px;
+        opacity: 0.6;
+    }
+</style>
+
 <div class="bg-primary text-white py-4">
     <div class="container">
         <div class="d-flex align-items-center gap-3">
@@ -20,61 +80,81 @@
 <div class="container py-5">
     <div class="row g-4">
 
-        <!-- Stats Cards -->
+        <!-- Stat Cards -->
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-4">
+            <div class="card border-0 shadow-sm text-center p-4 stat-card" onclick="toggleSection('inquiries', this, 'active-inq')">
                 <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
                 <h3 class="fw-bold" id="inquiryCount">0</h3>
                 <p class="text-muted mb-0">My Inquiries</p>
+                <small class="click-hint text-primary">Click to view ↓</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-4">
+            <div class="card border-0 shadow-sm text-center p-4 stat-card" onclick="toggleSection('bookings', this, 'active-book')">
                 <i class="fas fa-calendar fa-2x text-success mb-2"></i>
                 <h3 class="fw-bold" id="bookingCount">0</h3>
                 <p class="text-muted mb-0">Visit Bookings</p>
+                <small class="click-hint text-success">Click to view ↓</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-4">
+            <div class="card border-0 shadow-sm text-center p-4 stat-card" onclick="toggleSection('favorites', this, 'active-fav')">
                 <i class="fas fa-heart fa-2x text-danger mb-2"></i>
-                <h3 class="fw-bold">0</h3>
+                <h3 class="fw-bold" id="favCount">0</h3>
                 <p class="text-muted mb-0">Favorites</p>
+                <small class="click-hint text-danger">Click to view ↓</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-4">
+            <div class="card border-0 shadow-sm text-center p-4 stat-card" onclick="toggleSection('reviews', this, 'active-rev')">
                 <i class="fas fa-star fa-2x text-warning mb-2"></i>
-                <h3 class="fw-bold">0</h3>
+                <h3 class="fw-bold" id="reviewCount">0</h3>
                 <p class="text-muted mb-0">Reviews</p>
+                <small class="click-hint text-warning">Click to view ↓</small>
             </div>
         </div>
 
-        <!-- My Inquiries -->
-        <div class="col-md-6">
+        <!-- Inquiries Panel -->
+        <div class="col-12 section-panel" id="panel-inquiries">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white fw-bold">
-                    <i class="fas fa-envelope me-2 text-primary"></i>My Inquiries
+                <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                    <span><i class="fas fa-envelope me-2 text-primary"></i>My Inquiries</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSection('inquiries', null, 'active-inq')">✕ Close</button>
                 </div>
-                <div class="card-body" id="inquiriesList">
-                    <div class="text-center py-3">
-                        <div class="spinner-border spinner-border-sm text-primary"></div>
-                    </div>
-                </div>
+                <div class="card-body" id="inquiriesList"></div>
             </div>
         </div>
 
-        <!-- My Visit Bookings -->
-        <div class="col-md-6">
+        <!-- Bookings Panel -->
+        <div class="col-12 section-panel" id="panel-bookings">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white fw-bold">
-                    <i class="fas fa-calendar me-2 text-success"></i>My Visit Bookings
+                <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                    <span><i class="fas fa-calendar me-2 text-success"></i>My Visit Bookings</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSection('bookings', null, 'active-book')">✕ Close</button>
                 </div>
-                <div class="card-body" id="bookingsList">
-                    <div class="text-center py-3">
-                        <div class="spinner-border spinner-border-sm text-primary"></div>
-                    </div>
+                <div class="card-body" id="bookingsList"></div>
+            </div>
+        </div>
+
+        <!-- Favorites Panel -->
+        <div class="col-12 section-panel" id="panel-favorites">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                    <span><i class="fas fa-heart me-2 text-danger"></i>My Favorites</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSection('favorites', null, 'active-fav')">✕ Close</button>
                 </div>
+                <div class="card-body" id="favoritesList"></div>
+            </div>
+        </div>
+
+        <!-- Reviews Panel -->
+        <div class="col-12 section-panel" id="panel-reviews">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                    <span><i class="fas fa-star me-2 text-warning"></i>My Reviews</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSection('reviews', null, 'active-rev')">✕ Close</button>
+                </div>
+                <div class="card-body" id="reviewsList"></div>
             </div>
         </div>
 
@@ -84,9 +164,39 @@
 @section Scripts {
     <script>
         const inquiries = @Html.Raw(ViewBag.InquiriesJson ?? "[]");
-        const bookings = @Html.Raw(ViewBag.BookingsJson ?? "[]");
+        const bookings  = @Html.Raw(ViewBag.BookingsJson ?? "[]");
+        const token     = "@Context.Session.GetString("Token")";
+        const myUserId  = "@Context.Session.GetString("UserId")";
 
-        // Inquiries
+        // ── Toggle section ──
+        let activeSection = null;
+        let activeCard    = null;
+        let activeClass   = null;
+
+        function toggleSection(name, card, cls) {
+            const panel = document.getElementById('panel-' + name);
+            const isOpen = panel.classList.contains('show');
+
+            // Close all
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('show'));
+            document.querySelectorAll('.stat-card').forEach(c => {
+                c.classList.remove('active-inq','active-book','active-fav','active-rev');
+            });
+
+            if (!isOpen) {
+                panel.classList.add('show');
+                if (card) { card.classList.add(cls); }
+                else {
+                    // find and activate the right card
+                    const map = { inquiries: 0, bookings: 1, favorites: 2, reviews: 3 };
+                    document.querySelectorAll('.stat-card')[map[name]]?.classList.add(cls);
+                }
+                // Scroll to panel smoothly
+                setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            }
+        }
+
+        // ── Inquiries ──
         document.getElementById('inquiryCount').textContent = inquiries.length;
         if (inquiries.length > 0) {
             document.getElementById('inquiriesList').innerHTML = inquiries.map(i => `
@@ -96,39 +206,100 @@
                         <span class="badge ${i.isReplied ? 'bg-success' : 'bg-warning text-dark'}">
                             ${i.isReplied ? '✅ Replied' : '⏳ Pending'}
                         </span>
-                        <small class="text-muted">
-                            ${new Date(i.createdAt).toLocaleDateString()}
-                        </small>
+                        <small class="text-muted">${new Date(i.createdAt).toLocaleDateString()}</small>
                     </div>
                     ${i.reply ? `<p class="text-success small mt-1">Reply: ${i.reply}</p>` : ''}
-                </div>
-            `).join('');
+                </div>`).join('');
         } else {
             document.getElementById('inquiriesList').innerHTML =
                 '<p class="text-muted text-center">No inquiries yet!</p>';
         }
 
-        // Bookings
+        // ── Bookings ──
         document.getElementById('bookingCount').textContent = bookings.length;
         if (bookings.length > 0) {
             document.getElementById('bookingsList').innerHTML = bookings.map(b => `
                 <div class="border-bottom pb-2 mb-2">
-                    <p class="mb-1 fw-bold small">
-                        Visit on ${new Date(b.visitDate).toLocaleDateString()}
-                    </p>
+                    <p class="mb-1 fw-bold small">Visit on ${new Date(b.visitDate).toLocaleDateString()}</p>
                     <div class="d-flex justify-content-between">
-                        <span class="badge ${
-                            b.status === 'Confirmed' ? 'bg-success' :
-                            b.status === 'Cancelled' ? 'bg-danger' : 'bg-warning text-dark'}">
+                        <span class="badge ${b.status==='Confirmed'?'bg-success':b.status==='Cancelled'?'bg-danger':'bg-warning text-dark'}">
                             ${b.status}
                         </span>
                         <small class="text-muted">${b.notes ?? ''}</small>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         } else {
             document.getElementById('bookingsList').innerHTML =
                 '<p class="text-muted text-center">No bookings yet!</p>';
         }
+
+        // ── Favorites ──
+        async function loadFavorites() {
+            try {
+                const r = await fetch('https://localhost:7056/api/Favorites', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.ok) {
+                    const favs = await r.json();
+                    document.getElementById('favCount').textContent = favs.length;
+
+                    if (favs.length > 0) {
+                        const cards = await Promise.all(favs.map(async f => {
+                            try {
+                                const pr = await fetch('https://localhost:7056/api/Properties/' + f.propertyId);
+                                const p  = await pr.json();
+                                const imgUrl = (p.images && p.images.length > 0) ? p.images[0].imageUrl
+                                    : (p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : null);
+                                const src = imgUrl ? (imgUrl.startsWith('http') ? imgUrl : 'https://localhost:7056' + imgUrl) : null;
+                                return `<div class="d-flex align-items-center gap-3 border-bottom pb-2 mb-2">
+                                    ${src ? `<img src="${src}" style="width:60px;height:45px;object-fit:cover;border-radius:8px;" />` : `<div style="width:60px;height:45px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-home text-secondary"></i></div>`}
+                                    <div class="flex-grow-1">
+                                        <p class="fw-bold mb-0 small">${p.title}</p>
+                                        <small class="text-muted">${p.city} • ₹${p.price.toLocaleString('en-IN')}</small>
+                                    </div>
+                                    <a href="/Home/PropertyDetail/${f.propertyId}" class="btn btn-sm btn-outline-primary">View</a>
+                                </div>`;
+                            } catch(e) { return ''; }
+                        }));
+                        document.getElementById('favoritesList').innerHTML = cards.filter(c=>c).join('') || '<p class="text-muted text-center">No favorites yet!</p>';
+                    } else {
+                        document.getElementById('favoritesList').innerHTML = '<p class="text-muted text-center">No favorites yet!</p>';
+                    }
+                }
+            } catch(e) { console.error(e); }
+        }
+        loadFavorites();
+
+        // ── Reviews ──
+        async function loadReviews() {
+            try {
+                const r = await fetch('https://localhost:7056/api/Reviews');
+                if (r.ok) {
+                    const all  = await r.json();
+                    const mine = all.filter(rv => rv.reviewerId === myUserId);
+                    document.getElementById('reviewCount').textContent = mine.length;
+
+                    const stars = (n) => [1,2,3,4,5].map(i =>
+                        `<i class="fas fa-star" style="color:${i<=n?'#f59e0b':'#e2e8f0'};font-size:12px;"></i>`).join('');
+
+                    document.getElementById('reviewsList').innerHTML = mine.length > 0
+                        ? mine.map(rv => `
+                            <div class="border-bottom pb-2 mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>${stars(rv.rating)}</div>
+                                    <small class="text-muted">${new Date(rv.createdAt).toLocaleDateString()}</small>
+                                </div>
+                                <p class="text-muted small mb-0 mt-1">${rv.comment}</p>
+                            </div>`).join('')
+                        : '<p class="text-muted text-center">No reviews written yet!</p>';
+                }
+            } catch(e) {}
+        }
+        loadReviews();
+        // Always open inquiries panel by default
+         setTimeout(() => {
+             document.getElementById('panel-inquiries').classList.add('show');
+             document.querySelectorAll('.stat-card')[0].classList.add('active-inq');
+         }, 100);
     </script>
 }

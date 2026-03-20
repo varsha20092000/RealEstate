@@ -52,7 +52,18 @@ public class ReviewsController : ControllerBase
         await _uow.SaveChangesAsync();
         return Ok(review);
     }
-
+    // PUT api/reviews/{id}/approve
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id}/approve")]
+    public async Task<IActionResult> Approve(Guid id)
+    {
+        var review = await _uow.Reviews.GetByIdAsync(id);
+        if (review == null) return NotFound("Review not found");
+        review.IsApproved = true;
+        await _uow.Reviews.UpdateAsync(review);
+        await _uow.SaveChangesAsync();
+        return Ok(review);
+    }
     // DELETE api/reviews/{id}
     [Authorize]
     [HttpDelete("{id}")]

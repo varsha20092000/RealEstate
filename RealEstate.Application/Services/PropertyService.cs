@@ -114,7 +114,13 @@ public class PropertyService : IPropertyService
         ViewCount = p.ViewCount,
         CreatedAt = p.CreatedAt,
         ImageUrls = p.Images.Select(i => i.ImageUrl).ToList(),
+        Images = p.Images.Select(i => new PropertyImageDto
+        {
+            Id = i.Id,
+            ImageUrl = i.ImageUrl
+        }).ToList(),
         Latitude = p.Latitude,
         Longitude = p.Longitude,
+        AgentId = p.AgentId,
     };
 }

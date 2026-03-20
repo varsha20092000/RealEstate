@@ -11,8 +11,6 @@ using RealEstate.Domain.Entities;
 using RealEstate.Domain.Interfaces;
 using RealEstate.Infrastructure.Data;
 using RealEstate.Infrastructure.Repositories;
-
-
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,7 +59,7 @@ builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.Configure<EmailSettings>(
-builder.Configuration.GetSection("EmailSettings"));
+    builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<ISearchService, SearchService>();
@@ -106,14 +104,81 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider
-        .GetRequiredService<RoleManager<IdentityRole>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Seed roles
     foreach (var role in new[] { "Admin", "Agent", "Seller", "Buyer" })
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
     }
+
+    // Seed Admin
+    if (await userManager.FindByEmailAsync("admin@gmail.com") == null)
+    {
+        var admin = new AppUser
+        {
+            UserName = "admin@gmail.com",
+            Email = "admin@gmail.com",
+            FullName = "Admin User",
+            EmailConfirmed = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        await userManager.CreateAsync(admin, "Admin@12345");
+        await userManager.AddToRoleAsync(admin, "Admin");
+    }
+
+    // Seed Agent + Agent profile
+    if (await userManager.FindByEmailAsync("agent@gmail.com") == null)
+    {
+        var agent = new AppUser
+        {
+            UserName = "agent@gmail.com",
+            Email = "agent@gmail.com",
+            FullName = "Agent User",
+            EmailConfirmed = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        await userManager.CreateAsync(agent, "Agent@12345");
+        await userManager.AddToRoleAsync(agent, "Agent");
+
+        // Create Agent profile row so property creation works
+        var agentProfile = new Agent
+        {
+            Id = Guid.NewGuid(),
+            UserId = agent.Id,
+            LicenseNumber = "LIC-001",
+            AgencyName = "RealEstate Agency",
+            Bio = "Experienced real estate agent",
+            Specialization = "Residential",
+            IsApproved = true,
+            JoinedAt = DateTime.UtcNow
+        };
+        dbContext.Agents.Add(agentProfile);
+        await dbContext.SaveChangesAsync();
+    }
+
+    // Seed Buyer
+    if (await userManager.FindByEmailAsync("test@gmail.com") == null)
+    {
+        var buyer = new AppUser
+        {
+            UserName = "test@gmail.com",
+            Email = "test@gmail.com",
+            FullName = "Test Buyer",
+            EmailConfirmed = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        await userManager.CreateAsync(buyer, "Test@12345");
+        await userManager.AddToRoleAsync(buyer, "Buyer");
+    }
 }
+
 app.UseCors("AllowWeb");
 app.UseStaticFiles();
 app.UseSwagger();

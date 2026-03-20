@@ -21,7 +21,7 @@
                         <i class="fas fa-search"></i>
                     </span>
                     <input type="text" id="fulltextSearch" class="form-control border-primary"
-                           placeholder="🔍 Search anything "
+                           placeholder="🔍 Search anything"
                            oninput="debounceSearch(this.value)" />
                     <button class="btn btn-outline-secondary" onclick="clearSearch()">
                         <i class="fas fa-times"></i> Clear
@@ -29,7 +29,6 @@
                 </div>
                 <small class="text-muted ms-1">
                     <i class="fas fa-bolt text-warning"></i>
-                   
                 </small>
             </div>
         </div>
@@ -107,6 +106,12 @@
         let searchTimeout = null;
         let originalProperties = null;
 
+        function getImageSrc(url) {
+            if (!url) return null;
+            if (url.startsWith('http')) return url;
+            return `https://localhost:7056${url.startsWith('/') ? '' : '/'}${url}`;
+        }
+
         function renderProperties(properties, isPaged) {
             if (!properties || properties.length === 0) {
                 document.getElementById('propertiesGrid').innerHTML = `
@@ -119,14 +124,20 @@
                 return;
             }
 
-            document.getElementById('propertiesGrid').innerHTML = properties.map(p => `
+            document.getElementById('propertiesGrid').innerHTML = properties.map(p => {
+                const firstUrl = (p.images && p.images.length > 0)
+                    ? p.images[0].imageUrl
+                    : (p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : null);
+                const imgSrc = firstUrl ? getImageSrc(firstUrl) : null;
+
+                return `
                 <div class="col-md-4">
                     <div class="card property-card shadow-sm h-100">
                         <div class="position-relative">
                             <div class="property-img bg-light" style="overflow:hidden;">
-                                ${p.imageUrls && p.imageUrls.length > 0 ? `
-                                    <img src="https://localhost:7056${p.imageUrls[0]}"
-                                        class="w-100 h-100" style="object-fit:cover;" />
+                                ${imgSrc ? `
+                                    <img src="${imgSrc}" class="w-100 h-100" style="object-fit:cover;"
+                                         onerror="this.parentElement.innerHTML='<i class=\\'fas fa-home fa-3x text-secondary\\'></i>'" />
                                 ` : `
                                     <i class="fas fa-home fa-3x text-secondary"></i>
                                 `}
@@ -154,11 +165,10 @@
                             </a>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
-        // Initial load
         if (json && json.data && json.data.length > 0) {
             originalProperties = json.data;
             renderProperties(json.data, true);
@@ -175,15 +185,11 @@
             renderProperties([], false);
         }
 
-        // Elasticsearch search with debounce
         function debounceSearch(value) {
             clearTimeout(searchTimeout);
-                         if (value.length === 0) {
-            clearSearch();
-            return;
-        }
-        if (value.length < 3) return;
-        searchTimeout = setTimeout(() => fulltextSearch(value), 300);
+            if (value.length === 0) { clearSearch(); return; }
+            if (value.length < 3) return;
+            searchTimeout = setTimeout(() => fulltextSearch(value), 300);
         }
 
         async function fulltextSearch(query) {
@@ -192,14 +198,11 @@
                     <div class="spinner-border text-primary"></div>
                     <p class="mt-2 text-muted">Searching...</p>
                 </div>`;
-
             try {
                 const response = await fetch(
                     `https://localhost:7056/api/Properties/fulltext?q=${encodeURIComponent(query)}`);
                 const results = await response.json();
-
-             document.getElementById('pagination').innerHTML = '';
-
+                document.getElementById('pagination').innerHTML = '';
                 renderProperties(results, false);
             } catch (e) {
                 console.error('Search error:', e);
@@ -209,9 +212,7 @@
         function clearSearch() {
             document.getElementById('fulltextSearch').value = '';
             document.getElementById('searchBadge').style.display = 'none';
-            if (originalProperties) {
-                renderProperties(originalProperties, true);
-            }
+            if (originalProperties) renderProperties(originalProperties, true);
         }
     </script>
 }

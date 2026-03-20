@@ -22,8 +22,11 @@ public class FavoritesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized();
         var favorites = await _uow.Favorites.GetAllAsync();
-        return Ok(favorites);
+        var userFavorites = favorites.Where(f => f.UserId == userId);
+        return Ok(userFavorites);
     }
 
     // POST api/favorites
