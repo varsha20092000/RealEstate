@@ -53,3 +53,4 @@ Clean Architecture with 5 layers:
 
 ## 🔌 API
 30+ REST endpoints across 9 controllers with Swagger documentation
+<img width="705" height="861" alt="Screenshot 2026-03-20 172601" src="https://github.com/user-attachments/assets/03680117-74d2-450f-8b39-7a465d84ddd8" />
