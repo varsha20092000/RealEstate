@@ -1,4 +1,4 @@
-<img width="586" height="676" alt="property_detail png" src="https://github.com/user-attachments/assets/9396a6b4-3636-4736-8aa0-4d145926393d" />
+
 <img width="613" height="781" alt="Property png" src="https://github.com/user-attachments/assets/af5596de-8f2f-4dab-93ce-0478609d734b" />
 # 🏠 RealEstate — Full-Stack Property Management Platform
 
