@@ -250,6 +250,8 @@ public class HomeController : Controller
     {
         var token = HttpContext.Session.GetString("Token");
         if (token == null) return RedirectToAction("Login", "Auth");
+        var role = HttpContext.Session.GetString("Role");
+        if (role == "Agent") return RedirectToAction("AgentDashboard");
 
         ViewBag.Token = token;
 
